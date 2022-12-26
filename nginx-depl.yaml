@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx # name of the resource, everything in k8s is a resource
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx # the deployment is linked to the pod matching this label
+  template: # pod metadata and definition
+    metadata:
+      labels:
+        app: nginx # label of the pod
+    spec: # this is pretty much a pod, the smallest unit, inside you can find one or more containers, volumes, etc.
+      containers:
+        - image: 'nginx:latest' 
+          name: 'nginx'
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: config
+              mountPath: "/etc/nginx"
+              readOnly: true
+            - name: cache-storage
+              mountPath: "/var/cache/nginx"
+          imagePullPolicy: IfNotPresent
+      volumes:
+        - name: config
+          configMap:
+            name: nginx-config
+        - name: cache-storage
+          persistentVolumeClaim:
+            claimName: nginx-pvc
+      # dnsConfig:
+      #   options:
+      #     - name: ndots
+      #       value: "0"

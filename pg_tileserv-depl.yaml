@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pg-tileserv # name of the resource, everything in k8s is a resource
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pg-tileserv # the deployment is linked to the pod matching this label
+  template: # pod metadata and definition
+    metadata:
+      labels:
+        app: pg-tileserv # label of the pod
+    spec: # this is pretty much a pod, the smallest unit, inside you can find one or more containers, volumes, etc.
+      containers:
+        - image: 'pramsey/pg_tileserv:latest' 
+          name: 'pg-tileserv'
+          ports:
+            - containerPort: 7800
+          volumeMounts:
+            - name: config
+              mountPath: "/config"
+              readOnly: true
+          imagePullPolicy: IfNotPresent
+      volumes:
+        - name: config
+          configMap:
+            name: pg-ts-config
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "0"

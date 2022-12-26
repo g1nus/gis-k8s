@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geoserver # name of the resource, everything in k8s is a resource
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: geoserver # the deployment is linked to the pod matching this label
+  template: # pod metadata and definition
+    metadata:
+      labels:
+        app: geoserver # label of the pod
+    spec: # this is pretty much a pod, the smallest unit, inside you can find one or more containers, volumes, etc.
+      containers:
+        - image: 'kartoza/geoserver:2.22.0' 
+          name: 'geoserver'
+          env:
+            - name: COMMUNITY_EXTENSIONS
+              value: 'gwc-azure-blobstore-plugin'
+            - name: GEOSERVER_ADMIN_PASSWORD
+              value: 'geoserver'
+            - name: GEOSERVER_ADMIN_USER
+              value: 'admin'
+            - name: GEOSERVER_DATA_DIR
+              value: '/opt/geoserver/data_dir'
+            - name: GEOWEBCACHE_CACHE_DIR
+              value: '/opt/geoserver/data_dir/gwc'
+            - name: INITIAL_MEMORY
+              value: '2G'
+            - name: MAXIMUM_MEMORY
+              value: '4G'
+            - name: RECREATE_DATADIR
+              value: 'FALSE'
+            - name: STABLE_EXTENSIONS
+              value: ''
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - mountPath: /opt/geoserver/data_dir
+              name: geoserver-data
+            - mountPath: /settings
+              name: settings
+          imagePullPolicy: IfNotPresent
+      volumes:
+        - name: geoserver-data
+          persistentVolumeClaim:
+            claimName: gs-data-pvc
+        - name: settings
+          persistentVolumeClaim:
+            claimName: gs-settings-pvc
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "0"
